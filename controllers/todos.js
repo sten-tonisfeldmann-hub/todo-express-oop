@@ -38,6 +38,22 @@ class todoController {
             updatedTask: this.TODOS[todoIndex]
         });
 
-    }}
+    }
+
+    deleteTodo(req, res){
+        const todoId = req.params.id;
+        const todoIndex = this.TODOS.findIndex(todo => todo.id === todoId);
+
+        if (todoIndex < 0) {
+            return res.json({ message: "Could not find todo with the given index" });
+        }
+
+        const deletedTodo = this.TODOS.splice(todoIndex, 1)[0];
+        res.json({
+            message: "Deleted todo object",
+            deletedTask: deletedTodo
+        });
+    }
+}
 
 export const TodoController = new todoController();
