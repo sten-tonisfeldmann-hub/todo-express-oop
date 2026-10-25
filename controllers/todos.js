@@ -1,38 +1,50 @@
 import{ Todo } from '../models/todo.js';
+import { FileManager } from '../utils/files.js';
 
 class todoController {
     constructor() {
         this.TODOS = [];
     }
 
-    createTodo(req, res){
+    async createTodo(req, res){
         const task = req.body.task;
-        const newTodo = new Todo(Math.random(). toString(), task)
+        const todoData = await FileManager.readFile('./data/todos.json');
+
+        if (todoData) {
+            this.TODOS = todoData;
+        } else {
+            this.TODOS = [];
+        }
+
+        const newTodo = new Todo(Math.random().toString(), task)
         this.TODOS.push(newTodo);
+        await FileManager.writeFile('./data/todos.json', this.TODOS);
         res.json({
             message: "Created new todo object",
             newTask: newTodo
         });
     }
     
-    getTodos(req, res){
+    async getTodos(req, res){
+        const todoData = await FileManager.readFile('./data/todos.json');
+        this.TODOS = todoData || [];
         res.json({tasks: this.TODOS})};
     
-    updateTodo(req, res){
+    async updateTodo(req, res){
         const todoId = req.params.id;
         const updatedTask = req.body.task;
 
-        console.log(req.body);
-        console.log(req.params);
-
+        const todoData = await FileManager.readFile('./data/todos.json');
+        this.TODOS = todoData || [];
         const todoIndex = this.TODOS.findIndex(todo => todo.id === todoId);
 
         if(todoIndex < 0){
             res.json({message: "Could not find todo with the given index"})
-            throw new Error("Could not find the todo");
+            return;
         }
         
         this.TODOS[todoIndex] = new Todo(this.TODOS[todoIndex].id, updatedTask);
+        await FileManager.writeFile('./data/todos.json', this.TODOS);
         res.json({
             message: "Updated todo object",
             updatedTask: this.TODOS[todoIndex]
@@ -40,8 +52,10 @@ class todoController {
 
     }
 
-    deleteTodo(req, res){
+    async deleteTodo(req, res){
         const todoId = req.params.id;
+        const todoData = await FileManager.readFile('./data/todos.json');
+        this.TODOS = todoData || [];
         const todoIndex = this.TODOS.findIndex(todo => todo.id === todoId);
 
         if (todoIndex < 0) {
@@ -49,6 +63,7 @@ class todoController {
         }
 
         const deletedTodo = this.TODOS.splice(todoIndex, 1)[0];
+        await FileManager.writeFile('./data/todos.json', this.TODOS);
         res.json({
             message: "Deleted todo object",
             deletedTask: deletedTodo
